@@ -207,11 +207,11 @@ cdef class Camera:
         self.camera.Close()
 
     def stop_grabbing(self):
-        self.camera.StopGrabbing()
-
-    def __del__(self):
         if self.camera.IsGrabbing():
             self.camera.StopGrabbing()
+
+    def __del__(self):
+        self.stop_grabbing()
         self.close()
         self.camera.DetachDevice()
 
