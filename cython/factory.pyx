@@ -219,13 +219,9 @@ cdef class Camera:
         return '<Camera {0} open={1}>'.format(self.device_info.friendly_name, self.opened)
 
     def grab_images(self, int nr_images, unsigned int timeout=5000):
+
         if not self.opened:
             raise RuntimeError('Camera not opened')
-        
-        if nr_images < 1:
-            self.camera.StartGrabbing()
-        else:
-            self.camera.StartGrabbing(nr_images)
 
         cdef CGrabResultPtr ptr_grab_result
         cdef IImage* img
@@ -236,36 +232,46 @@ cdef class Camera:
         assert image_format.startswith('Mono'), 'Only mono images allowed at this point'
         assert not image_format.endswith('p'), 'Packed data not supported at this point'
 
-        while self.camera.IsGrabbing():
+        try:
+            if nr_images < 1:
+                self.camera.StartGrabbing()
+            else:
+                self.camera.StartGrabbing(nr_images)
 
-            with nogil:
-                # Blocking call into native Pylon C++ SDK code, release GIL so other python threads can run
-                self.camera.RetrieveResult(timeout, ptr_grab_result)
+            while self.camera.IsGrabbing():
 
-            if not ACCESS_CGrabResultPtr_GrabSucceeded(ptr_grab_result):
-                error_desc = (<string>(ACCESS_CGrabResultPtr_GetErrorDescription(ptr_grab_result))).decode()
-                raise RuntimeError(error_desc)
+                with nogil:
+                    # Blocking call into native Pylon C++ SDK code, release GIL so other python threads can run
+                    self.camera.RetrieveResult(timeout, ptr_grab_result)
 
-            img = &(<IImage&>ptr_grab_result)
-            if not img.IsValid():
-                raise RuntimeError('Graped IImage is not valid.')
+                if not ACCESS_CGrabResultPtr_GrabSucceeded(ptr_grab_result):
+                    error_desc = (<string>(ACCESS_CGrabResultPtr_GetErrorDescription(ptr_grab_result))).decode()
+                    raise RuntimeError(error_desc)
 
-            if img.GetImageSize() % img.GetHeight():
-                print('This image buffer is wired. Probably you will see an error soonish.')
-                print('\tBytes:', img.GetImageSize())
-                print('\tHeight:', img.GetHeight())
-                print('\tWidth:', img.GetWidth())
-                print('\tGetPaddingX:', img.GetPaddingX())
+                img = &(<IImage&>ptr_grab_result)
+                if not img.IsValid():
+                    raise RuntimeError('Graped IImage is not valid.')
 
-            assert not img.GetPaddingX(), 'Image padding not supported.'
-            # TODO: Check GetOrientation to fix oritentation of image if required.
+                if img.GetImageSize() % img.GetHeight():
+                    print('This image buffer is wired. Probably you will see an error soonish.')
+                    print('\tBytes:', img.GetImageSize())
+                    print('\tHeight:', img.GetHeight())
+                    print('\tWidth:', img.GetWidth())
+                    print('\tGetPaddingX:', img.GetPaddingX())
 
-            img_data = np.frombuffer((<char*>img.GetBuffer())[:img.GetImageSize()], dtype='uint'+bits_per_pixel_prop[3:])
+                assert not img.GetPaddingX(), 'Image padding not supported.'
+                # TODO: Check GetOrientation to fix oritentation of image if required.
 
-            # TODO: How to handle multi-byte data here?
-            img_data = img_data.reshape((img.GetHeight(), -1))
-            # img_data = img_data[:img.GetHeight(), :img.GetWidth()]
-            yield img_data
+                img_data = np.frombuffer((<char*>img.GetBuffer())[:img.GetImageSize()], dtype='uint'+bits_per_pixel_prop[3:])
+
+                # TODO: How to handle multi-byte data here?
+                img_data = img_data.reshape((img.GetHeight(), -1))
+                # img_data = img_data[:img.GetHeight(), :img.GetWidth()]
+                yield img_data
+
+        except:
+            self.stop_grabbing()
+            raise
 
     def grab_image(self, unsigned int timeout=5000):
         return next(self.grab_images(1, timeout))
