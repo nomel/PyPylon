@@ -195,14 +195,23 @@ cdef class Camera:
                 self.camera.Close()
             elif not self.opened and opened:
                 self.camera.Open()
-
+                
+    property is_grabbing:
+        def __get__(self):		
+            return self.camera.IsGrabbing()
+    
     def open(self):
         self.camera.Open()
 
     def close(self):
         self.camera.Close()
 
+    def stop_grabbing(self):
+        if self.camera.IsGrabbing():
+            self.camera.StopGrabbing()
+
     def __del__(self):
+        self.stop_grabbing()
         self.close()
         self.camera.DetachDevice()
 
@@ -212,8 +221,11 @@ cdef class Camera:
     def grab_images(self, int nr_images, unsigned int timeout=5000):
         if not self.opened:
             raise RuntimeError('Camera not opened')
-
-        self.camera.StartGrabbing(nr_images)
+        
+        if nr_images < 1:
+            self.camera.StartGrabbing()
+        else:
+            self.camera.StartGrabbing(nr_images)
 
         cdef CGrabResultPtr ptr_grab_result
         cdef IImage* img
