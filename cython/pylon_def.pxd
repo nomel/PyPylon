@@ -116,8 +116,10 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         void IsCameraDeviceRemoved()
         void Open() except +
         void Close() except +
+        void StopGrabbing() except +
         bool IsOpen() except +
         IPylonDevice* DetachDevice() except +
+        void StartGrabbing() except +
         void StartGrabbing(size_t maxImages) except +    #FIXME: implement different strategies
         bool IsGrabbing()
         # RetrieveResult() is blocking call into C++ native SDK, allow it to be called without GIL
