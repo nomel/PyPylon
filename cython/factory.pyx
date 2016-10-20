@@ -218,7 +218,7 @@ cdef class Camera:
     def __repr__(self):
         return '<Camera {0} open={1}>'.format(self.device_info.friendly_name, self.opened)
 
-    def grab_images(self, int nr_images, unsigned int timeout=5000):
+    def grab_images(self, int nr_images = -1, unsigned int timeout=5000):
 
         if not self.opened:
             raise RuntimeError('Camera not opened')
