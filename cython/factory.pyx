@@ -287,6 +287,26 @@ cdef class Camera:
         def __get__(self):
             return _PropertyMap.create(&self.camera.GetNodeMap())
 
+    # Configuration properties associated with various grab strategies
+    property max_num_buffer:
+        def __get__(self):
+            return self.camera.MaxNumBuffer.GetValue()
+        def __set__(self, value):
+            self.camera.MaxNumBuffer.SetValue(value)
+
+    property max_num_queued_buffer:
+        def __get__(self):
+            return self.camera.MaxNumQueuedBuffer.GetValue()
+        def __set__(self, value):
+            self.camera.MaxNumQueuedBuffer.SetValue(value)
+
+    property output_queue_size:
+        def __get__(self):
+            return self.camera.OutputQueueSize.GetValue()
+        def __set__(self, value):
+            self.camera.OutputQueueSize.SetValue(value)
+
+
 cdef class Factory:
     def __cinit__(self):
         PylonInitialize()

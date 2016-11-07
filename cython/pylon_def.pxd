@@ -132,6 +132,13 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         bool RetrieveResult(unsigned int timeout_ms, CGrabResultPtr& grab_result) nogil except + # FIXME: Timout handling
         INodeMap& GetNodeMap()
 
+        # From CInstantCameraParams_Params base class
+        IInteger &MaxNumBuffer;
+        IInteger &MaxNumQueuedBuffer;
+        IInteger &OutputQueueSize;
+
+
+
 
     cdef cppclass DeviceInfoList_t:
         cppclass iterator:
