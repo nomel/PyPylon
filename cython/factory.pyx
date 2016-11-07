@@ -7,6 +7,13 @@ import numpy as np
 
 from pylon_def cimport *
 
+cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
+
+    cpdef enum EGrabStrategy:
+        GrabStrategy_OneByOne,
+        GrabStrategy_LatestImageOnly,
+        GrabStrategy_LatestImages,
+        GrabStrategy_UpcomingImage
 
 cdef class DeviceInfo:
     cdef:
@@ -199,7 +206,7 @@ cdef class Camera:
     property is_grabbing:
         def __get__(self):		
             return self.camera.IsGrabbing()
-    
+
     def open(self):
         self.camera.Open()
 
@@ -218,7 +225,7 @@ cdef class Camera:
     def __repr__(self):
         return '<Camera {0} open={1}>'.format(self.device_info.friendly_name, self.opened)
 
-    def grab_images(self, int nr_images = -1, unsigned int timeout=5000):
+    def grab_images(self, int nr_images = -1, EGrabStrategy grab_strategy=GrabStrategy_OneByOne, unsigned int timeout=5000):
 
         if not self.opened:
             raise RuntimeError('Camera not opened')
@@ -234,9 +241,9 @@ cdef class Camera:
 
         try:
             if nr_images < 1:
-                self.camera.StartGrabbing()
+                self.camera.StartGrabbing(grab_strategy)
             else:
-                self.camera.StartGrabbing(nr_images)
+                self.camera.StartGrabbing(nr_images, grab_strategy)
 
             while self.camera.IsGrabbing():
 
@@ -273,13 +280,12 @@ cdef class Camera:
             self.stop_grabbing()
             raise
 
-    def grab_image(self, unsigned int timeout=5000):
-        return next(self.grab_images(1, timeout))
+    def grab_image(self, EGrabStrategy grab_strategy=GrabStrategy_OneByOne, unsigned int timeout=5000):
+        return next(self.grab_images(1, grab_strategy, timeout))
 
     property properties:
         def __get__(self):
             return _PropertyMap.create(&self.camera.GetNodeMap())
-
 
 cdef class Factory:
     def __cinit__(self):
