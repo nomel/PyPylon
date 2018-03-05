@@ -1,3 +1,5 @@
+Note: This is a fork of mabl/PyPylon with all of the (as now) PR merged in. TODO: That color image support.
+
 # PyPylon
 An experimental python wrapper around the Basler Pylon 5 library. 
 Its initial ideas were inspired by the [python-pylon](https://github.com/srgblnch/python-pylon) which is also a cython based wrapper around the Basler pylon library.
